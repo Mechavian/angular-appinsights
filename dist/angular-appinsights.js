@@ -4,7 +4,7 @@
 (function () {
     "use strict";
 
-    angular.module('angular-appInsights', [])
+    angular.module('angular-appinsights', [])
         .provider('insights', InsightsProvider)
         .run(['$rootScope', '$location', 'insights', onAppRun]);
 
