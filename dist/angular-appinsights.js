@@ -8,41 +8,33 @@
         .provider('insights', InsightsProvider)
         .run(['$rootScope', '$location', 'insights', onAppRun]);
 
-        function InsightsProvider() {
+        var _appName = '';
 
-            var _appId,
-                _appName,
-                appInsights = window.appInsights || {},
-                insightsWrapper = {
-                    'appName': _appName,
-                    'trackEvent': appInsights.trackEvent || angular.noop,
-                    'trackPageView': appInsights.trackPageView || angular.noop,
-                    // below retained for back-compat
-                    'logEvent': appInsights.logEvent || appInsights.trackEvent || angular.noop,
-                    'logPageView': appInsights.logPageView || appInsights.trackPageView || angular.noop
-                };
+        function InsightsProvider() {
 
             this.start = function (appId, appName) {
 
+                console.log('start');
                 if (!appId) {
                     throw new Error('Argument "appId" expected');
                 }
 
-                _appId = appId;
                 _appName = appName || '(Application Root)';
 
-                if (appInsights.start) {
-                    appInsights.start(appId);
-                } else if (angular.isFunction(appInsights)) {
-				    appInsights=appInsights({ instrumentationKey: appId });
-				} else {
+                if (window.appInsights.start) {
+                    window.appInsights.start(appId);
+                } else if (angular.isFunction(window.appInsights)) {
+				    window.appInsights=window.appInsights({ instrumentationKey: appId });
+				} else if (window.appInsights.config) {
+                    window.appInsights.config.instrumentationKey = appId;
+                } else {
                     console.warn('Application Insights not initialized');
                 }
-
             };
 
             this.$get = function() {
-                return insightsWrapper;
+                console.log('Creating Insights object');
+                return  window.appInsights || {};
             };
 
         }
@@ -50,13 +42,15 @@
         function onAppRun($rootScope, $location, insights) {
 
             $rootScope.$on('$locationChangeSuccess', function() {
-                var pagePath;
+                console.log('$locationChangeSuccess');
+                var pagePath,
+                    trackPageView = insights.trackPageView || function() {console.warn('noop');};
                 try {
-                    pagePath = $location.path();
-                    pagePath =  insights.appName + '/' + pagePath;
+                    pagePath = $location.path().substr(1);
+                    pagePath =  _appName + '/' + pagePath;
                 }
                 finally {
-                    insights.trackPageView(pagePath);
+                    trackPageView(pagePath);
                 }
             });
         }
