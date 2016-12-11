@@ -35,7 +35,7 @@ module.exports = function (grunt) {
         curly: true,
         eqeqeq: true,
         immed: true,
-        latedef: true,
+        latedef: 'nofunc',
         newcap: true,
         noarg: true,
         sub: true,
@@ -43,10 +43,13 @@ module.exports = function (grunt) {
         unused: true,
         boss: true,
         eqnull: true,
-        globals: {}
+        globals: {
+          window: true,
+          console: true
+        }
       },
       gruntfile: {
-        src: 'Gruntfile.js'
+        src: ['Gruntfile.js', 'lib/**/*.js']
       }
     },
     copy: {
