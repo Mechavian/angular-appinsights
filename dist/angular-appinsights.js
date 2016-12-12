@@ -8,51 +8,60 @@
         .provider('insights', InsightsProvider)
         .run(['$rootScope', '$location', 'insights', onAppRun]);
 
-        var _appName = '';
+    var _appName = '';
 
-        function InsightsProvider() {
+    function InsightsProvider() {
 
-            this.start = function (appId, appName) {
+        this.start = function (appId, appName) {
 
-                console.log('start');
-                if (!appId) {
-                    throw new Error('Argument "appId" expected');
-                }
+            if (!appId) {
+                throw new Error('Argument "appId" expected');
+            }
 
-                _appName = appName || '(Application Root)';
+            _appName = appName || '(Application Root)';
 
-                if (window.appInsights.start) {
-                    window.appInsights.start(appId);
-                } else if (angular.isFunction(window.appInsights)) {
-				    window.appInsights=window.appInsights({ instrumentationKey: appId });
-				} else if (window.appInsights.config) {
-                    window.appInsights.config.instrumentationKey = appId;
-                } else {
-                    console.warn('Application Insights not initialized');
-                }
-            };
+            if (window.appInsights.start) {
+                window.appInsights.start(appId);
+            } else if (angular.isFunction(window.appInsights)) {
+                window.appInsights = window.appInsights({ instrumentationKey: appId });
+            } else if (window.appInsights.config) {
+                window.appInsights.config.instrumentationKey = appId;
+            } else {
+                console.warn('Application Insights not initialized');
+            }
+        };
 
-            this.$get = function() {
-                console.log('Creating Insights object');
-                return  window.appInsights || {};
-            };
+        this.$get = function () {
+            return window.appInsights || {};
+        };
 
-        }
+    }
 
-        function onAppRun($rootScope, $location, insights) {
+    function onAppRun($rootScope, $location, insights) {
 
-            $rootScope.$on('$locationChangeSuccess', function() {
-                console.log('$locationChangeSuccess');
-                var pagePath,
-                    trackPageView = insights.trackPageView || function() {console.warn('noop');};
+        if (insights.trackPageView) {
+            $rootScope.$on('$locationChangeStart', function () {
+                var pagePath;
                 try {
-                    pagePath = $location.path().substr(1);
-                    pagePath =  _appName + '/' + pagePath;
+                    pagePath = _appName + '/' + $location.path().substr(1);
                 }
                 finally {
-                    trackPageView(pagePath);
+                    console.log("startTrackPage('" + pagePath + "')");
+                    insights.startTrackPage(pagePath);
+                }
+            });
+
+            $rootScope.$on('$locationChangeSuccess', function (e, newUrl) {
+                var pagePath;
+                try {
+                    pagePath = _appName + '/' + $location.path().substr(1);
+                }
+                finally {
+                    console.log("stopTrackPage('" + pagePath + "', '" + newUrl + "')");
+                    insights.stopTrackPage(pagePath, newUrl);
                 }
             });
         }
+    }
 
-}());
+} ());
