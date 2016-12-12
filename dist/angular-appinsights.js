@@ -9,6 +9,21 @@
         .run(['$rootScope', '$location', 'insights', onAppRun]);
 
     var _appName = '';
+    var _stub = {
+        startTrackPage: angular.noop,
+        stopTrackPage: angular.noop,
+        trackPageView: angular.noop,
+        startTrackEvent: angular.noop,
+        stopTrackEvent: angular.noop,
+        trackEvent: angular.noop,
+        trackDependency: angular.noop,
+        trackException: angular.noop,
+        trackMetric: angular.noop,
+        trackTrace: angular.noop,
+        flush: angular.noop,
+        setAuthenticatedUserContext: angular.noop,
+        clearAuthenticatedUserContext: angular.noop,
+    };
 
     function InsightsProvider() {
 
@@ -32,36 +47,32 @@
         };
 
         this.$get = function () {
-            return window.appInsights || {};
+            return window.appInsights || _stub;
         };
 
     }
 
     function onAppRun($rootScope, $location, insights) {
 
-        if (insights.trackPageView) {
-            $rootScope.$on('$locationChangeStart', function () {
-                var pagePath;
-                try {
-                    pagePath = _appName + '/' + $location.path().substr(1);
-                }
-                finally {
-                    console.log("startTrackPage('" + pagePath + "')");
-                    insights.startTrackPage(pagePath);
-                }
-            });
+        $rootScope.$on('$locationChangeStart', function () {
+            var pagePath;
+            try {
+                pagePath = _appName + '/' + $location.path().substr(1);
+            }
+            finally {
+                insights.startTrackPage(pagePath);
+            }
+        });
 
-            $rootScope.$on('$locationChangeSuccess', function (e, newUrl) {
-                var pagePath;
-                try {
-                    pagePath = _appName + '/' + $location.path().substr(1);
-                }
-                finally {
-                    console.log("stopTrackPage('" + pagePath + "', '" + newUrl + "')");
-                    insights.stopTrackPage(pagePath, newUrl);
-                }
-            });
-        }
+        $rootScope.$on('$locationChangeSuccess', function (e, newUrl) {
+            var pagePath;
+            try {
+                pagePath = _appName + '/' + $location.path().substr(1);
+            }
+            finally {
+                insights.stopTrackPage(pagePath, newUrl);
+            }
+        });
     }
 
 } ());
