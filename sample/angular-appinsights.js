@@ -1,4 +1,4 @@
-/*! angular-appinsights - v0.0.3 - 2016-12-11
+/*! angular-appinsights - v0.0.3 - 2016-12-12
 * https://github.com/johnhidey/angular-appinsights#readme
 * Copyright (c) 2016 ; Licensed  */
 (function () {
@@ -29,27 +29,41 @@
 
         this.start = function (appId, appName) {
 
-            if (!appId) {
-                throw new Error('Argument "appId" expected');
+            var options;
+            if (angular.isObject(appId)) {
+                options = appId;
+            } else if (angular.isString(appId)) {
+                options = {
+                    appId: appId,
+                    appName: appName
+                };
             }
 
-            _appName = appName || '(Application Root)';
-
-            if (window.appInsights.start) {
-                window.appInsights.start(appId);
-            } else if (angular.isFunction(window.appInsights)) {
-                window.appInsights = window.appInsights({ instrumentationKey: appId });
-            } else if (window.appInsights.config) {
-                window.appInsights.config.instrumentationKey = appId;
-            } else {
-                console.warn('Application Insights not initialized');
-            }
+            initialize(options);
         };
 
         this.$get = function () {
             return window.appInsights || _stub;
         };
 
+        function initialize(options) {
+
+            _appName = options.appName || '(Application Root)';
+
+            if (options.appId) {
+                if (window.appInsights.start) {
+                    window.appInsights.start(options.appId);
+                } else if (angular.isFunction(window.appInsights)) {
+                    window.appInsights = window.appInsights({ instrumentationKey: options.appId });
+                } else if (window.appInsights.config) {
+                    window.appInsights.config.instrumentationKey = options.appId;
+                }
+            }
+
+            if (!window.appInsights.config.instrumentationKey) {
+                console.warn('Application Insights not initialized');
+            }
+        }
     }
 
     function onAppRun($rootScope, $location, insights) {
